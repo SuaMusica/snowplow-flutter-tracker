@@ -22,9 +22,29 @@ struct TrackerConfigurationReader: Decodable {
     let userAnonymisation: Bool?
     let screenContext: Bool?
     let applicationContext: Bool?
+    let lifecycleAutotracking: Bool?
     
     var devicePlatformType: DevicePlatform? {
-        if let devicePlatform = self.devicePlatform { return SPStringToDevicePlatform(devicePlatform) }
+        if let devicePlatform = self.devicePlatform {
+            switch devicePlatform {
+            case "web":
+                return DevicePlatform.web
+            case "srv":
+                return DevicePlatform.serverSideApp
+            case "pc":
+                return DevicePlatform.desktop
+            case "app":
+                return DevicePlatform.general
+            case "tv":
+                return DevicePlatform.connectedTV
+            case "cnsl":
+                return DevicePlatform.gameConsole
+            case "iot":
+                return DevicePlatform.internetOfThings
+            default:
+                return DevicePlatform.mobile
+            }
+        }
         return nil
     }
 }
@@ -56,6 +76,7 @@ extension TrackerConfigurationReader {
         if let ua = self.userAnonymisation { trackerConfig.userAnonymisation(ua) }
         if let scr = self.screenContext { trackerConfig.screenContext(scr) }
         if let ac = self.applicationContext { trackerConfig.applicationContext(ac) }
+        if let lc = self.lifecycleAutotracking { trackerConfig.lifecycleAutotracking(lc) }
 
         return trackerConfig
     }
