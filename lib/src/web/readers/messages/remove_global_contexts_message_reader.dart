@@ -9,15 +9,14 @@
 // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
-import Foundation
-import SnowplowTracker
+import 'package:flutter/foundation.dart';
 
-struct CreateTrackerMessageReader: Decodable {
-    let namespace: String
-    let networkConfig: NetworkConfigurationReader
-    let trackerConfig: TrackerConfigurationReader?
-    let subjectConfig: SubjectConfigurationReader?
-    let gdprConfig: GdprConfigurationReader?
-    let emitterConfig: EmitterConfigurationReader?
-    let globalContextsConfig: GlobalContextsConfigurationReader?
+@immutable
+class RemoveGlobalContextsMessageReader {
+  final String tracker;
+  final String tag;
+
+  RemoveGlobalContextsMessageReader(dynamic map)
+      : tracker = map['tracker'],
+        tag = map['tag'];
 }

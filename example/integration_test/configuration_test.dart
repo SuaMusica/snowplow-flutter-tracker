@@ -378,4 +378,46 @@ void main() {
         }),
         isTrue);
   });
+
+  testWidgets("attaches global contexts to all events",
+      (WidgetTester tester) async {
+    if (kIsWeb) {
+      return;
+    }
+
+    SnowplowTracker tracker = await Snowplow.createTracker(
+        namespace: 'global-contexts-test',
+        endpoint: SnowplowTests.microEndpoint,
+        globalContextsConfig: const GlobalContextsConfiguration(contexts: [
+          SelfDescribing(
+              schema:
+                  'iglu:com.snowplowanalytics.mobile/screen/jsonschema/1-0-0',
+              data: {
+                'name': 'demo',
+                'id': '00000000-0000-0000-0000-000000000001',
+              }),
+        ]));
+
+    await tracker
+        .track(const Structured(category: 'category', action: 'action'));
+
+    expect(
+        await SnowplowTests.checkMicroGood((dynamic events) {
+          if (events.length != 1) {
+            return false;
+          }
+
+          final contextsData = events[0]['event']['contexts']['data'];
+          dynamic context = contextsData.firstWhere(
+              (x) => x['schema']
+                  .toString()
+                  .contains('com.snowplowanalytics.mobile/screen'),
+              orElse: () => null);
+
+          return (context != null) &&
+              (context['data']['name'] == 'demo') &&
+              (context['data']['id'] == '00000000-0000-0000-0000-000000000001');
+        }),
+        isTrue);
+  });
 }
