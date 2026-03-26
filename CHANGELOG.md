@@ -1,3 +1,8 @@
+
+# 0.9.0
+* Migrate Android example app build to Gradle 8 / Java 21 (#70)
+* Add [static] global contexts (#71) 
+
 # 0.8.0
 
 * Add integration with WebView tracker (#59)

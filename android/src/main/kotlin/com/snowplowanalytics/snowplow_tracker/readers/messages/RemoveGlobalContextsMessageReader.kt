@@ -9,15 +9,11 @@
 // "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
-import Foundation
-import SnowplowTracker
+package com.snowplowanalytics.snowplow_tracker.readers.messages
 
-struct CreateTrackerMessageReader: Decodable {
-    let namespace: String
-    let networkConfig: NetworkConfigurationReader
-    let trackerConfig: TrackerConfigurationReader?
-    let subjectConfig: SubjectConfigurationReader?
-    let gdprConfig: GdprConfigurationReader?
-    let emitterConfig: EmitterConfigurationReader?
-    let globalContextsConfig: GlobalContextsConfigurationReader?
+class RemoveGlobalContextsMessageReader(val values: Map<String, Any>) {
+    private val valuesDefault = values.withDefault { null }
+
+    val tracker: String by values
+    val tag: String by values
 }

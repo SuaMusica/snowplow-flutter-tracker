@@ -390,6 +390,39 @@ void main() {
         }));
   });
 
+  test('creates tracker with global contexts configuration', () async {
+    await Snowplow.createTracker(
+        namespace: 'tns1',
+        endpoint: 'https://snowplowanalytics.com',
+        globalContextsConfig: const GlobalContextsConfiguration(contexts: [
+          SelfDescribing(
+              schema: 'iglu:com.example/user/jsonschema/1-0-0',
+              data: {'userId': '123'}),
+        ]));
+
+    expect(
+        methodCall,
+        isMethodCall('createTracker', arguments: {
+          'namespace': 'tns1',
+          'networkConfig': {'endpoint': 'https://snowplowanalytics.com'},
+          'globalContextsConfig': {
+            'contexts': [
+              {
+                'schema': 'iglu:com.example/user/jsonschema/1-0-0',
+                'data': {'userId': '123'}
+              }
+            ]
+          }
+        }));
+  });
+
+  test('creates tracker without global contexts configuration', () async {
+    await Snowplow.createTracker(
+        namespace: 'tns1', endpoint: 'https://snowplowanalytics.com');
+
+    expect(methodCall?.arguments.containsKey('globalContextsConfig'), isFalse);
+  });
+
   test('ends media tracking', () async {
     await Snowplow.endMediaTracking(tracker: 'tns1', id: 'm1');
 
@@ -399,5 +432,34 @@ void main() {
           'tracker': 'tns1',
           'mediaTrackingId': 'm1',
         }));
+  });
+
+  test('adds global contexts', () async {
+    await Snowplow.addGlobalContexts(
+        'ctx_tag_1',
+        const SelfDescribing(
+            schema: 'iglu:com.example/context/jsonschema/1-0-0',
+            data: {'key': 'value'}),
+        tracker: 'tns1');
+
+    expect(
+        methodCall,
+        isMethodCall('addGlobalContexts', arguments: {
+          'tracker': 'tns1',
+          'tag': 'ctx_tag_1',
+          'context': {
+            'schema': 'iglu:com.example/context/jsonschema/1-0-0',
+            'data': {'key': 'value'}
+          }
+        }));
+  });
+
+  test('removes global contexts', () async {
+    await Snowplow.removeGlobalContexts('ctx_tag_1', tracker: 'tns1');
+
+    expect(
+        methodCall,
+        isMethodCall('removeGlobalContexts',
+            arguments: {'tracker': 'tns1', 'tag': 'ctx_tag_1'}));
   });
 }

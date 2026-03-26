@@ -34,14 +34,14 @@ dependencies:
 
   flutter_markdown: ^0.6.12
 
-  webview_flutter: ^4.8.0
+  webview_flutter: ^4.13.1
 
 dev_dependencies:
   integration_test:
     sdk: flutter
   flutter_test:
     sdk: flutter
-  http: "1.2.0"
+  http: 1.2.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

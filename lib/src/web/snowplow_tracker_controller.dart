@@ -32,16 +32,8 @@ class SnowplowTrackerController {
       _setUserId(configuration.namespace, configuration.subjectConfig?.userId);
     }
 
-    if (configuration.gdprConfig != null) {
-      snowplow(
-          'enableGdprContext',
-          jsify({
-            'basisForProcessing': configuration.gdprConfig?.basisForProcessing,
-            'documentId': configuration.gdprConfig?.documentId,
-            'documentVersion': configuration.gdprConfig?.documentVersion,
-            'documentDescription': configuration.gdprConfig?.documentDescription
-          }));
-    }
+    // Note: GDPR context requires the ConsentPlugin in v4
+    // See: https://docs.snowplow.io/docs/sources/web-trackers/tracking-events/consent-gdpr/
 
     if (configuration
             .trackerConfig?.webActivityTracking?.enableActivityTracking ??
@@ -112,5 +104,15 @@ class SnowplowTrackerController {
       return cookieValue?.split('.');
     }
     return null;
+  }
+
+  static void addGlobalContexts(String tracker, String tag, dynamic context) {
+    if (context != null) {
+      snowplow('addGlobalContexts', jsify({tag: context}));
+    }
+  }
+
+  static void removeGlobalContexts(String tracker, String tag) {
+    snowplow('removeGlobalContexts', jsify([tag]));
   }
 }

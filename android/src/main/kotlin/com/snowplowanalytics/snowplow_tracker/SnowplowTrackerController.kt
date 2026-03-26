@@ -19,6 +19,8 @@ import com.snowplowanalytics.snowplow.configuration.Configuration;
 import com.snowplowanalytics.snowplow.event.Event
 import com.snowplowanalytics.snowplow_tracker.readers.configurations.DefaultTrackerConfiguration
 import com.snowplowanalytics.snowplow_tracker.readers.messages.*
+import com.snowplowanalytics.snowplow_tracker.readers.events.SelfDescribingJsonReader
+import com.snowplowanalytics.snowplow.globalcontexts.GlobalContext
 
 object SnowplowTrackerController {
 
@@ -43,6 +45,9 @@ object SnowplowTrackerController {
 
         val emitterConfigReader = messageReader.emitterConfig
         emitterConfigReader?.let { controllers.add(it.toConfiguration()) }
+
+        val globalContextsConfigReader = messageReader.globalContextsConfig
+        globalContextsConfigReader?.let { controllers.add(it.toConfiguration()) }
 
         Snowplow.createTracker(
                 context,
@@ -96,6 +101,21 @@ object SnowplowTrackerController {
         val trackerController = Snowplow.getTracker(messageReader.tracker)
 
         trackerController?.subject?.userId = messageReader.userId
+    }
+
+    fun addGlobalContexts(messageReader: AddGlobalContextsMessageReader) {
+        val trackerController = Snowplow.getTracker(messageReader.tracker)
+
+        val entity = messageReader.context?.let { SelfDescribingJsonReader(it).toSelfDescribingJson() }
+        val staticContexts = listOfNotNull(entity)
+
+        trackerController?.globalContexts?.add(messageReader.tag, GlobalContext(staticContexts))
+    }
+
+    fun removeGlobalContexts(messageReader: RemoveGlobalContextsMessageReader) {
+        val trackerController = Snowplow.getTracker(messageReader.tracker)
+
+        trackerController?.globalContexts?.remove(messageReader.tag)
     }
 
     fun getSessionUserId(messageReader: GetParameterMessageReader): String? {

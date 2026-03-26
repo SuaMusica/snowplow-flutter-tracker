@@ -40,6 +40,17 @@ class SnowplowTracker {
     await Snowplow.setUserId(userId, tracker: namespace);
   }
 
+  /// Adds a global context with the given [tag] to be attached to all tracked events.
+  Future<void> addGlobalContexts(
+      String tag, SelfDescribing context) async {
+    await Snowplow.addGlobalContexts(tag, context, tracker: namespace);
+  }
+
+  /// Removes global contexts with the given [tag].
+  Future<void> removeGlobalContexts(String tag) async {
+    await Snowplow.removeGlobalContexts(tag, tracker: namespace);
+  }
+
   /// Returns the identifier (string UUIDv4) for the user of the session.
   ///
   /// All trackers on Web share the same session.

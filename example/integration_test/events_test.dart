@@ -10,7 +10,6 @@
 // See the Apache License Version 2.0 for the specific language governing permissions and limitations there under.
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:snowplow_tracker/snowplow_tracker.dart';
 import 'package:uuid/uuid.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -247,26 +246,26 @@ void main() {
     expect(
         await SnowplowTests.checkMicroGood((dynamic events) {
           dynamic screenViews = events
-              .where((event) => event['event']['event_name'] == 'screen_view');
+              .where((event) => event['event']['event_name'] == 'screen_view')
+              .toList();
 
           return (screenViews.length == 1) &&
-              (events[0]['event']['unstruct_event']['data']['data']['name'] ==
+              (screenViews[0]['event']['unstruct_event']['data']['data']
+                      ['name'] ==
                   '/');
         }),
         isTrue);
   });
 
-  testWidgets("raises an exception when tracking page view event on mobile",
-      (WidgetTester tester) async {
+  testWidgets("tracks page view event on mobile", (WidgetTester tester) async {
     if (kIsWeb) {
       return;
     }
 
-    try {
-      await Snowplow.track(const PageViewEvent(), tracker: 'test');
-      fail('Exception not thrown');
-    } catch (e) {
-      expect(e, isInstanceOf<MissingPluginException>());
-    }
+    // PageView is now supported on mobile — should not throw
+    await Snowplow.track(
+      const PageViewEvent(url: 'https://example.com'),
+      tracker: 'test',
+    );
   });
 }
