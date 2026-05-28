@@ -54,6 +54,12 @@ dev_dependencies:
 
 # The following section is specific to Flutter.
 flutter:
+  # The bundled example lives inside the plugin repo (snowplow-flutter-tracker) while
+  # the package name is snowplow_tracker. Flutter's SPM integration references both
+  # paths and SwiftPM rejects the identity mismatch. Consumer apps are unaffected.
+  config:
+    enable-swift-package-manager: false
+
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
