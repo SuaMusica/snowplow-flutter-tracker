@@ -29,7 +29,7 @@ flutter:
         package: com.snowplowanalytics.snowplow_tracker
         pluginClass: SnowplowTrackerPlugin
       ios:
-        pluginClass: SnowplowTrackerPlugin
+        pluginClass: SwiftSnowplowTrackerPlugin
       web:
         pluginClass: SnowplowTrackerPluginWeb
         fileName: snowplow_tracker_plugin_web.dart

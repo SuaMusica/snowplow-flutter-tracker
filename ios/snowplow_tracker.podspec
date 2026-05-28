@@ -13,7 +13,7 @@ A package for tracking Snowplow events in Flutter apps.
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'Snowplow Analytics Ltd' => 'support@snowplowanalytics.com' }
   s.source           = { :path => '.' }
-  s.source_files = 'Classes/**/*'
+  s.source_files = 'snowplow_tracker/Sources/snowplow_tracker/**/*.swift'
   s.dependency 'Flutter'
   s.dependency 'SnowplowTracker', '~> 6.2.2'
   s.platform = :ios, '11.0'
