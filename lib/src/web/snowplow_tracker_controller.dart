@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Snowplow Analytics Ltd. All rights reserved.
+// Copyright (c) 2022-present Snowplow Analytics Ltd. All rights reserved.
 //
 // This program is licensed to you under the Apache License Version 2.0,
 // and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -11,6 +11,10 @@
 
 import 'dart:js_util';
 import 'dart:html';
+
+import 'readers/messages/end_media_tracking_message_reader.dart';
+import 'readers/messages/start_media_tracking_message_reader.dart';
+import 'readers/messages/update_media_tracking_message_reader.dart';
 
 import 'readers/configurations/configuration_reader.dart';
 import 'readers/messages/event_message_reader.dart';
@@ -28,16 +32,8 @@ class SnowplowTrackerController {
       _setUserId(configuration.namespace, configuration.subjectConfig?.userId);
     }
 
-    if (configuration.gdprConfig != null) {
-      snowplow(
-          'enableGdprContext',
-          jsify({
-            'basisForProcessing': configuration.gdprConfig?.basisForProcessing,
-            'documentId': configuration.gdprConfig?.documentId,
-            'documentVersion': configuration.gdprConfig?.documentVersion,
-            'documentDescription': configuration.gdprConfig?.documentDescription
-          }));
-    }
+    // Note: GDPR context requires the ConsentPlugin in v4
+    // See: https://docs.snowplow.io/docs/sources/web-trackers/tracking-events/consent-gdpr/
 
     if (configuration
             .trackerConfig?.webActivityTracking?.enableActivityTracking ??
@@ -51,10 +47,15 @@ class SnowplowTrackerController {
             'heartbeatDelay': webActivityTracking.heartbeatDelay
           }));
     }
+
+    if (configuration.trackerConfig?.jsMediaPluginURL != null) {
+      snowplow('addPlugin', configuration.trackerConfig?.jsMediaPluginURL,
+          jsify(['snowplowMedia', 'SnowplowMediaPlugin']));
+    }
   }
 
   static void trackEvent(EventMessageReader message) {
-    snowplow('${message.event().endpoint()}:${message.tracker}',
+    snowplow('${message.event.endpoint()}:${message.tracker}',
         jsify(message.eventData()));
   }
 
@@ -82,6 +83,20 @@ class SnowplowTrackerController {
     return null;
   }
 
+  static void startMediaTracking(StartMediaTrackingMessageReader message) {
+    snowplow('startMediaTracking:${message.tracker}',
+        jsify(message.configuration.toTrackerOptions()));
+  }
+
+  static void endMediaTracking(EndMediaTrackingMessageReader message) {
+    snowplow('endMediaTracking:${message.tracker}',
+        jsify({'id': message.mediaTrackingId}));
+  }
+
+  static void updateMediaTracking(UpdateMediaTrackingMessageReader message) {
+    snowplow('updateMediaTracking:${message.tracker}', jsify(message.toMap()));
+  }
+
   static List<String>? _getSnowplowCookieParts() {
     final regex = RegExp(r'_sp_id\.[a-f0-9]+=([^;]+);?');
     if (document.cookie != null) {
@@ -89,5 +104,15 @@ class SnowplowTrackerController {
       return cookieValue?.split('.');
     }
     return null;
+  }
+
+  static void addGlobalContexts(String tracker, String tag, dynamic context) {
+    if (context != null) {
+      snowplow('addGlobalContexts', jsify({tag: context}));
+    }
+  }
+
+  static void removeGlobalContexts(String tracker, String tag) {
+    snowplow('removeGlobalContexts', jsify([tag]));
   }
 }

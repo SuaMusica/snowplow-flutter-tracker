@@ -1,3 +1,36 @@
+
+# 0.9.0
+* Migrate Android example app build to Gradle 8 / Java 21 (#70)
+* Add [static] global contexts (#71) 
+
+# 0.8.0
+
+* Add integration with WebView tracker (#59)
+
+# 0.7.1
+
+* Automatically generate ID for ScreenViews (#55)
+
+# 0.7.0
+
+* Add media tracking APIs to the tracker (#49)
+* Fix tracker initialization with partial platform context property overrides on Android (#53)
+* Update uuid package constraint to 4.0.0 (#48) thanks to @petermnt
+* Add support for Android Gradle Plugin 8 (#46) thanks to @petermnt
+* Remove documentation in the project in favour of docs.snowplow.io to reduce duplicity (#51)
+* Update flutter_lints, http, js, and example dependency versions (#52)
+
+# 0.6.0
+
+* Upgrade mobile trackers to version 6.0
+* Add support for mobile screen engagement tracking including list item view and scroll changed events (#43)
+* Add configuration to override platform context properties in the mobile context including the IDFA identifiers (#44)
+* Update SDK constraint to <4.0.0 (#42)
+* Fix publish action (#38)
+* Remove deprecated setMockMethodCallHandler from tests (#41)
+* Move the repository to the snowplow Github organization (#29)
+* Update copyright headers
+
 # 0.5.0
 
 *  Add lifecycle autotracking config option (#39)

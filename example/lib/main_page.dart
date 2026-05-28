@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter/services.dart';
 
 import 'package:snowplow_tracker/snowplow_tracker.dart';
@@ -8,11 +10,13 @@ import 'nested_page.dart';
 
 class MainPage extends StatefulWidget {
   const MainPage({
-    Key? key,
+    super.key,
     required this.tracker,
-  }) : super(key: key);
+    this.mediaTracking,
+  });
 
   final SnowplowTracker tracker;
+  final MediaTracking? mediaTracking;
 
   @override
   State<MainPage> createState() => _MainPageState();
@@ -23,9 +27,20 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
   String _sessionId = 'Unknown';
   String _sessionUserId = 'Unknown';
   int? _sessionIndex;
+  bool _globalContextEnabled = false;
+
+  WebViewController? _webViewController;
 
   Future<void> trackEvent(event, {List<SelfDescribing>? contexts}) async {
     widget.tracker.track(event, contexts: contexts);
+
+    setState(() {
+      _numberOfEventsSent += 1;
+    });
+  }
+
+  Future<void> trackMediaEvent(event, {List<SelfDescribing>? contexts}) async {
+    widget.mediaTracking?.track(event, contexts: contexts);
 
     setState(() {
       _numberOfEventsSent += 1;
@@ -39,6 +54,16 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
     updateState();
 
     WidgetsBinding.instance.addObserver(this);
+
+    if (!kIsWeb) {
+      _webViewController = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..loadRequest(Uri.parse(const String.fromEnvironment('WEBVIEW_URL',
+            defaultValue: 'http://localhost:3000')));
+
+      widget.tracker.registerWebViewJavaScriptChannel(
+          webViewController: _webViewController!);
+    }
   }
 
   Future<void> updateState() async {
@@ -82,6 +107,40 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
           child: Column(children: <Widget>[
             Text('Number of events sent: $_numberOfEventsSent'),
             const SizedBox(height: 24.0),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _globalContextEnabled
+                      ? 'Disable Global Context'
+                      : 'Enable Global Context',
+                ),
+                Switch(
+                  value: _globalContextEnabled,
+                  onChanged: (bool value) async {
+                    if (value) {
+                      await widget.tracker.addGlobalContexts(
+                        'demo_app',
+                        const SelfDescribing(
+                          schema:
+                              'iglu:com.snowplowanalytics.mobile/screen/jsonschema/1-0-0',
+                          data: {
+                            'name': 'demo',
+                            'id': '00000000-0000-0000-0000-000000000001',
+                          },
+                        ),
+                      );
+                    } else {
+                      await widget.tracker.removeGlobalContexts('demo_app');
+                    }
+                    setState(() {
+                      _globalContextEnabled = value;
+                    });
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 24.0),
             ElevatedButton(
               onPressed: () {
                 const structured = Structured(
@@ -109,13 +168,31 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
             ElevatedButton(
               onPressed: () {
                 const event = ScreenView(
-                    id: '2c295365-eae9-4243-a3ee-5c4b7baccc8f',
-                    name: 'home',
-                    type: 'full',
-                    transitionType: 'none');
+                    name: 'home', type: 'full', transitionType: 'none');
                 trackEvent(event);
               },
               child: const Text('Send Screen View Event'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                const event = ListItemView(index: 3, itemsCount: 15);
+                trackEvent(event);
+              },
+              child: const Text('Send List Item View Event'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                const event = ScrollChanged(
+                  yOffset: 1,
+                  xOffset: 2,
+                  viewHeight: 20,
+                  viewWidth: 10,
+                  contentHeight: 100,
+                  contentWidth: 200,
+                );
+                trackEvent(event);
+              },
+              child: const Text('Send Scroll Changed Event'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -182,13 +259,32 @@ class _MainPageState extends State<MainPage> with WidgetsBindingObserver {
               },
               child: const Text('Send Structured Event With Context'),
             ),
+            ElevatedButton(
+              onPressed: () {
+                trackMediaEvent(MediaPlayEvent());
+              },
+              child: const Text('Send Media Play Event'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                trackMediaEvent(MediaPauseEvent());
+              },
+              child: const Text('Send Media Pause Event'),
+            ),
             const SizedBox(height: 24.0),
             Text('Session ID: $_sessionId'),
             const SizedBox(height: 5.0),
             Text('Session user ID: $_sessionUserId'),
             const SizedBox(height: 5.0),
             Text('Session index: $_sessionIndex'),
-            const SizedBox(height: 5.0)
+            const SizedBox(height: 5.0),
+            const SizedBox(height: 24.0),
+            if (!kIsWeb && _webViewController != null)
+              SizedBox(
+                height: 300,
+                child: WebViewWidget(controller: _webViewController!),
+              ),
+            // Final SizedBox remains for spacing
           ]),
         ),
       ),

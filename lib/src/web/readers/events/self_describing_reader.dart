@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Snowplow Analytics Ltd. All rights reserved.
+// Copyright (c) 2022-present Snowplow Analytics Ltd. All rights reserved.
 //
 // This program is licensed to you under the Apache License Version 2.0,
 // and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -13,12 +13,16 @@ import 'package:snowplow_tracker/events/self_describing.dart';
 import 'event_reader.dart';
 
 class SelfDescribingReader extends SelfDescribing implements EventReader {
-  SelfDescribingReader(dynamic map)
+  final bool isMedia;
+
+  SelfDescribingReader(dynamic map, {this.isMedia = false})
       : super(schema: map['schema'], data: map['data']);
 
   @override
   String endpoint() {
-    return 'trackSelfDescribingEvent';
+    return isMedia
+        ? 'trackMediaSelfDescribingEvent'
+        : 'trackSelfDescribingEvent';
   }
 
   Map json() {

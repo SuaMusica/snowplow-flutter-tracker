@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Snowplow Analytics Ltd. All rights reserved.
+// Copyright (c) 2022-present Snowplow Analytics Ltd. All rights reserved.
 //
 // This program is licensed to you under the Apache License Version 2.0,
 // and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -12,11 +12,14 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:snowplow_tracker/configurations/media_tracking_configuration.dart';
 import 'package:snowplow_tracker/events/event.dart';
 import 'package:snowplow_tracker/events/self_describing.dart';
+import 'package:snowplow_tracker/media_tracking.dart';
 import 'package:snowplow_tracker/snowplow.dart';
 import 'package:snowplow_tracker/snowplow_observer.dart';
 import 'package:snowplow_tracker/configurations/configuration.dart';
+import 'package:snowplow_tracker/web_view_integration.dart';
 
 /// Instance of an initialized Snowplow tracker identified by a [namespace].
 ///
@@ -35,6 +38,17 @@ class SnowplowTracker {
   /// Sets the business user ID to the string.
   Future<void> setUserId(String? userId) async {
     await Snowplow.setUserId(userId, tracker: namespace);
+  }
+
+  /// Adds a global context with the given [tag] to be attached to all tracked events.
+  Future<void> addGlobalContexts(
+      String tag, SelfDescribing context) async {
+    await Snowplow.addGlobalContexts(tag, context, tracker: namespace);
+  }
+
+  /// Removes global contexts with the given [tag].
+  Future<void> removeGlobalContexts(String tag) async {
+    await Snowplow.removeGlobalContexts(tag, tracker: namespace);
   }
 
   /// Returns the identifier (string UUIDv4) for the user of the session.
@@ -56,6 +70,20 @@ class SnowplowTracker {
   /// All trackers on Web share the same session.
   Future<int?> get sessionIndex async {
     return await Snowplow.getSessionIndex(tracker: namespace);
+  }
+
+  /// Starts media tracking with the given [configuration].
+  /// Note: to track media events on Web, you will need to install the media JS
+  /// plugin by configuration [TrackerConfiguration.jsMediaPluginURL].
+  Future<MediaTracking> startMediaTracking(
+      MediaTrackingConfiguration configuration) async {
+    return await Snowplow.startMediaTracking(
+        configuration: configuration, tracker: namespace);
+  }
+
+  /// Ends media tracking with the given [id].
+  Future<void> endMediaTracking(String id) async {
+    await Snowplow.endMediaTracking(tracker: namespace, id: id);
   }
 
   /// Returns a [SnowplowObserver] for automatically tracking `PageViewEvent`
@@ -132,5 +160,35 @@ class SnowplowTracker {
         (configuration
                 .trackerConfig?.webActivityTracking?.trackPageViewsInObserver ??
             false);
+  }
+
+  /// Returns a [WebViewIntegration] instance that can be used to track
+  /// events from a WebView.
+  /// The [WebViewIntegration] instance will ignore the tracker namespace
+  /// by default, meaning that it will track events for any tracker that
+  /// sends them to the WebView.
+  /// If you want to track events only for this tracker, set
+  /// [ignoreTrackerNamespace] to false.
+  WebViewIntegration getWebViewIntegration(
+      {bool ignoreTrackerNamespace = true}) {
+    return WebViewIntegration(
+        tracker: this, ignoreTrackerNamespace: ignoreTrackerNamespace);
+  }
+
+  /// Registers a JavaScript channel for the WebView to receive
+  /// messages from the WebView.
+  ///
+  /// The [webViewController] is the controller of the WebView
+  /// that will receive the messages.
+  /// The [ignoreTrackerNamespace] parameter indicates whether the
+  /// WebView should ignore the tracker namespace when tracking events.
+  /// If true, the WebView will track events for any tracker that sends them
+  /// to the WebView. If false, the WebView will only track events for this
+  /// tracker.
+  void registerWebViewJavaScriptChannel(
+      {required dynamic webViewController,
+      bool ignoreTrackerNamespace = true}) {
+    getWebViewIntegration(ignoreTrackerNamespace: ignoreTrackerNamespace)
+        .registerJavaScriptChannel(webViewController);
   }
 }

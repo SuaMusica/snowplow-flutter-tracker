@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Snowplow Analytics Ltd. All rights reserved.
+// Copyright (c) 2022-present Snowplow Analytics Ltd. All rights reserved.
 //
 // This program is licensed to you under the Apache License Version 2.0,
 // and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -23,7 +23,7 @@ class ScreenView implements Event {
   final String name;
 
   /// The id (UUID v4) of screen that was viewed.
-  final String id;
+  final String? id;
 
   /// The type of screen that was viewed.
   final String? type;
@@ -42,12 +42,21 @@ class ScreenView implements Event {
 
   const ScreenView(
       {required this.name,
-      required this.id,
+      this.id,
       this.type,
       this.previousName,
       this.previousType,
       this.previousId,
       this.transitionType});
+
+  ScreenView.fromMap(Map<String, Object?> map)
+      : name = map['name'] as String,
+        id = map['id'] as String?,
+        type = map['type'] as String?,
+        previousName = map['previousName'] as String?,
+        previousType = map['previousType'] as String?,
+        previousId = map['previousId'] as String?,
+        transitionType = map['transitionType'] as String?;
 
   @override
   String endpoint() {

@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Snowplow Analytics Ltd. All rights reserved.
+// Copyright (c) 2022-present Snowplow Analytics Ltd. All rights reserved.
 //
 // This program is licensed to you under the Apache License Version 2.0,
 // and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -47,6 +47,13 @@ class Structured implements Event {
       this.label,
       this.property,
       this.value});
+
+  Structured.fromMap(Map<String, Object?> map)
+      : category = map['category'] as String,
+        action = map['action'] as String,
+        label = map['label'] as String?,
+        property = map['property'] as String?,
+        value = (map['value'] as num?)?.toDouble();
 
   @override
   String endpoint() {

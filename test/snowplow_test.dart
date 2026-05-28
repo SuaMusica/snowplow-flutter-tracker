@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Snowplow Analytics Ltd. All rights reserved.
+// Copyright (c) 2022-present Snowplow Analytics Ltd. All rights reserved.
 //
 // This program is licensed to you under the Apache License Version 2.0,
 // and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -11,20 +11,7 @@
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:snowplow_tracker/configurations/gdpr_configuration.dart';
-import 'package:snowplow_tracker/configurations/network_configuration.dart';
-import 'package:snowplow_tracker/configurations/tracker_configuration.dart';
-import 'package:snowplow_tracker/configurations/emitter_configuration.dart';
-import 'package:snowplow_tracker/events/consent_granted.dart';
-import 'package:snowplow_tracker/events/consent_withdrawn.dart';
-import 'package:snowplow_tracker/events/event.dart';
-import 'package:snowplow_tracker/events/screen_view.dart';
-import 'package:snowplow_tracker/events/self_describing.dart';
-import 'package:snowplow_tracker/events/structured.dart';
-import 'package:snowplow_tracker/events/timing.dart';
-import 'package:snowplow_tracker/events/page_view_event.dart';
-import 'package:snowplow_tracker/snowplow.dart';
-import 'package:uuid/uuid.dart';
+import 'package:snowplow_tracker/snowplow_tracker.dart';
 
 void main() {
   const MethodChannel channel = MethodChannel('snowplow_tracker');
@@ -36,14 +23,16 @@ void main() {
   setUp(() {
     methodCall = null;
     returnValue = null;
-    channel.setMockMethodCallHandler((MethodCall call) async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall call) async {
       methodCall = call;
       return returnValue;
     });
   });
 
   tearDown(() {
-    channel.setMockMethodCallHandler(null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (message) => null);
   });
 
   test('createsTrackerWithConfiguration', () async {
@@ -205,15 +194,55 @@ void main() {
   });
 
   test('tracks screen view event', () async {
-    String id = const Uuid().v4();
-    Event event = ScreenView(name: 'screen1', id: id);
+    Event event = const ScreenView(name: 'screen1');
     await Snowplow.track(event, tracker: 'tns2');
 
     expect(
         methodCall,
         isMethodCall('trackScreenView', arguments: {
           'tracker': 'tns2',
-          'eventData': {'name': 'screen1', 'id': id}
+          'eventData': {'name': 'screen1'}
+        }));
+  });
+
+  test('tracks scroll changed event', () async {
+    Event event = const ScrollChanged(
+      yOffset: 10,
+      xOffset: 20,
+      viewHeight: 100,
+      viewWidth: 200,
+      contentHeight: 300,
+      contentWidth: 400,
+    );
+    await Snowplow.track(event, tracker: 'tns1');
+
+    expect(
+        methodCall,
+        isMethodCall('trackScrollChanged', arguments: {
+          'tracker': 'tns1',
+          'eventData': {
+            'yOffset': 10,
+            'xOffset': 20,
+            'viewHeight': 100,
+            'viewWidth': 200,
+            'contentHeight': 300,
+            'contentWidth': 400,
+          }
+        }));
+  });
+
+  test('tracks list item view event', () async {
+    Event event = const ListItemView(index: 1, itemsCount: 10);
+    await Snowplow.track(event, tracker: 'tns1');
+
+    expect(
+        methodCall,
+        isMethodCall('trackListItemView', arguments: {
+          'tracker': 'tns1',
+          'eventData': {
+            'index': 1,
+            'itemsCount': 10,
+          }
         }));
   });
 
@@ -322,5 +351,115 @@ void main() {
           'tracker': 'tns1',
         }));
     expect(sessionIndex, equals(10));
+  });
+
+  test('starts media tracking', () async {
+    await Snowplow.startMediaTracking(
+        tracker: 'tns1',
+        configuration: const MediaTrackingConfiguration(id: 'm1'));
+
+    expect(
+        methodCall,
+        isMethodCall('startMediaTracking', arguments: {
+          'tracker': 'tns1',
+          'configuration': {'id': 'm1', 'pings': true, 'session': true}
+        }));
+  });
+
+  test('updates media tracking', () async {
+    await Snowplow.updateMediaTracking(
+        tracker: 'tns1',
+        id: 'm1',
+        player: const MediaPlayerEntity(
+            label: 'n1', currentTime: 10, duration: 100, volume: 50),
+        ad: const MediaAdEntity(adId: "ad1"));
+
+    expect(
+        methodCall,
+        isMethodCall('updateMediaTracking', arguments: {
+          'tracker': 'tns1',
+          'mediaTrackingId': 'm1',
+          'player': {
+            'label': 'n1',
+            'currentTime': 10.0,
+            'duration': 100.0,
+            'volume': 50
+          },
+          'ad': {'adId': 'ad1'},
+          'adBreak': null
+        }));
+  });
+
+  test('creates tracker with global contexts configuration', () async {
+    await Snowplow.createTracker(
+        namespace: 'tns1',
+        endpoint: 'https://snowplowanalytics.com',
+        globalContextsConfig: const GlobalContextsConfiguration(contexts: [
+          SelfDescribing(
+              schema: 'iglu:com.example/user/jsonschema/1-0-0',
+              data: {'userId': '123'}),
+        ]));
+
+    expect(
+        methodCall,
+        isMethodCall('createTracker', arguments: {
+          'namespace': 'tns1',
+          'networkConfig': {'endpoint': 'https://snowplowanalytics.com'},
+          'globalContextsConfig': {
+            'contexts': [
+              {
+                'schema': 'iglu:com.example/user/jsonschema/1-0-0',
+                'data': {'userId': '123'}
+              }
+            ]
+          }
+        }));
+  });
+
+  test('creates tracker without global contexts configuration', () async {
+    await Snowplow.createTracker(
+        namespace: 'tns1', endpoint: 'https://snowplowanalytics.com');
+
+    expect(methodCall?.arguments.containsKey('globalContextsConfig'), isFalse);
+  });
+
+  test('ends media tracking', () async {
+    await Snowplow.endMediaTracking(tracker: 'tns1', id: 'm1');
+
+    expect(
+        methodCall,
+        isMethodCall('endMediaTracking', arguments: {
+          'tracker': 'tns1',
+          'mediaTrackingId': 'm1',
+        }));
+  });
+
+  test('adds global contexts', () async {
+    await Snowplow.addGlobalContexts(
+        'ctx_tag_1',
+        const SelfDescribing(
+            schema: 'iglu:com.example/context/jsonschema/1-0-0',
+            data: {'key': 'value'}),
+        tracker: 'tns1');
+
+    expect(
+        methodCall,
+        isMethodCall('addGlobalContexts', arguments: {
+          'tracker': 'tns1',
+          'tag': 'ctx_tag_1',
+          'context': {
+            'schema': 'iglu:com.example/context/jsonschema/1-0-0',
+            'data': {'key': 'value'}
+          }
+        }));
+  });
+
+  test('removes global contexts', () async {
+    await Snowplow.removeGlobalContexts('ctx_tag_1', tracker: 'tns1');
+
+    expect(
+        methodCall,
+        isMethodCall('removeGlobalContexts',
+            arguments: {'tracker': 'tns1', 'tag': 'ctx_tag_1'}));
   });
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Snowplow Analytics Ltd. All rights reserved.
+// Copyright (c) 2022-present Snowplow Analytics Ltd. All rights reserved.
 //
 // This program is licensed to you under the Apache License Version 2.0,
 // and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -27,7 +27,8 @@ class TrackerConfigurationReader extends TrackerConfiguration {
             webActivityTracking: map['webActivityTracking'] == null
                 ? null
                 : WebActivityTrackingReader(map['webActivityTracking']),
-            userAnonymisation: map['userAnonymisation']);
+            userAnonymisation: map['userAnonymisation'],
+            jsMediaPluginURL: map['jsMediaPluginURL']);
 
   void addTrackerOptions(dynamic options) {
     if (appId != null) {

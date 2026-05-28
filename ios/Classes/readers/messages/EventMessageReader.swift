@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Snowplow Analytics Ltd. All rights reserved.
+// Copyright (c) 2022-present Snowplow Analytics Ltd. All rights reserved.
 //
 // This program is licensed to you under the Apache License Version 2.0,
 // and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -15,6 +15,10 @@ import SnowplowTracker
 struct EventMessageReader: Decodable {
     let tracker: String
     let contexts: [SelfDescribingJsonReader]?
+    let mediaTrackingId: String?
+    let player: MediaPlayerEntityReader?
+    let ad: MediaAdEntityReader?
+    let adBreak: MediaAdBreakEntityReader?
 }
 
 extension EventMessageReader {

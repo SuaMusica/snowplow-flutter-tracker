@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Snowplow Analytics Ltd. All rights reserved.
+// Copyright (c) 2022-present Snowplow Analytics Ltd. All rights reserved.
 //
 // This program is licensed to you under the Apache License Version 2.0,
 // and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -36,6 +36,11 @@ class CreateTrackerMessageReader(val values: Map<String, Any>) {
     val emitterConfig: EmitterConfigurationReader? by lazy {
         values.get("emitterConfig")?.let {
             EmitterConfigurationReader(it as Map<String, Any>)
+        }
+    }
+    val globalContextsConfig: GlobalContextsConfigurationReader? by lazy {
+        values.get("globalContextsConfig")?.let {
+            GlobalContextsConfigurationReader(it as Map<String, Any>)
         }
     }
 }

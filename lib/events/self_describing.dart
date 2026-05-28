@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Snowplow Analytics Ltd. All rights reserved.
+// Copyright (c) 2022-present Snowplow Analytics Ltd. All rights reserved.
 //
 // This program is licensed to you under the Apache License Version 2.0,
 // and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -33,6 +33,10 @@ class SelfDescribing implements Event {
   final dynamic data;
 
   const SelfDescribing({required this.schema, required this.data});
+
+  SelfDescribing.fromMap(Map<String, Object?> map)
+      : schema = map['schema'] as String,
+        data = map['data'];
 
   @override
   String endpoint() {

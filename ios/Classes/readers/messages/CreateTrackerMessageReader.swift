@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Snowplow Analytics Ltd. All rights reserved.
+// Copyright (c) 2022-present Snowplow Analytics Ltd. All rights reserved.
 //
 // This program is licensed to you under the Apache License Version 2.0,
 // and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -19,4 +19,5 @@ struct CreateTrackerMessageReader: Decodable {
     let subjectConfig: SubjectConfigurationReader?
     let gdprConfig: GdprConfigurationReader?
     let emitterConfig: EmitterConfigurationReader?
+    let globalContextsConfig: GlobalContextsConfigurationReader?
 }

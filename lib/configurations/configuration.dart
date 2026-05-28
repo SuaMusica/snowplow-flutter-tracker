@@ -1,4 +1,4 @@
-// Copyright (c) 2022 Snowplow Analytics Ltd. All rights reserved.
+// Copyright (c) 2022-present Snowplow Analytics Ltd. All rights reserved.
 //
 // This program is licensed to you under the Apache License Version 2.0,
 // and you may not use this file except in compliance with the Apache License Version 2.0.
@@ -11,6 +11,7 @@
 
 import 'package:flutter/foundation.dart';
 import 'package:snowplow_tracker/configurations/gdpr_configuration.dart';
+import 'package:snowplow_tracker/configurations/global_contexts_configuration.dart';
 import 'package:snowplow_tracker/configurations/network_configuration.dart';
 import 'package:snowplow_tracker/configurations/subject_configuration.dart';
 import 'package:snowplow_tracker/configurations/tracker_configuration.dart';
@@ -39,13 +40,17 @@ class Configuration {
   /// Configuration of Emitter.
   final EmitterConfiguration? emitterConfig;
 
+  /// Configuration of global contexts attached to all events.
+  final GlobalContextsConfiguration? globalContextsConfig;
+
   const Configuration(
       {required this.namespace,
       required this.networkConfig,
       this.trackerConfig,
       this.subjectConfig,
       this.gdprConfig,
-      this.emitterConfig});
+      this.emitterConfig,
+      this.globalContextsConfig});
 
   Map<String, Object?> toMap() {
     final conf = <String, Object?>{
@@ -54,7 +59,8 @@ class Configuration {
       'trackerConfig': trackerConfig?.toMap(),
       'subjectConfig': subjectConfig?.toMap(),
       'gdprConfig': gdprConfig?.toMap(),
-      'emitterConfig': emitterConfig?.toMap()
+      'emitterConfig': emitterConfig?.toMap(),
+      'globalContextsConfig': globalContextsConfig?.toMap()
     };
     conf.removeWhere((key, value) => value == null);
     return conf;
